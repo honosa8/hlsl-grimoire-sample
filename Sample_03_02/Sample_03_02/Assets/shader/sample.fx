@@ -40,7 +40,7 @@ float4 PSMain(VSOutput vsOut) : SV_Target0
         g_sampler,// 第１因数はサンプラー。
         vsOut.uv  // 第2因数はUV座標
         );
-	//return texColor;
+	return texColor;
     
     //return float4(vsOut.color, 1.0f);
 }
