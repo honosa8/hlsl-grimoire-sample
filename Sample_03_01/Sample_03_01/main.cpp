@@ -39,9 +39,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     //////////////////////////////////////
     auto& renderContext = g_graphicsEngine->GetRenderContext();
 
+    float f = 0;
     // ここからゲームループ
     while (DispatchWindowMessage())
     {
+        f++;
         //フレーム開始
         g_engine->BeginFrame();
 
@@ -54,7 +56,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
         // step-3 ワールド行列を作成
         Matrix mWorld;
-        mWorld.MakeTranslation(0.0f, 0.0f, 0.0f);
+        mWorld.MakeTranslation(0.5f*sin(f/100.0f), 0.4f, 0.0f);
+        Matrix mWorld2;
+        mWorld2.MakeRotationZ(sin(f / 100.0f));
+        mWorld *= mWorld2;
         
         // step-4 ワールド行列をグラフィックメモリにコピー
         cb.CopyToVRAM(mWorld);
