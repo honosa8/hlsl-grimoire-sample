@@ -47,6 +47,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         0.0f,// U座標
         1.0f // V座標
     );
+    
+    /*triangle.SetUVCoord(
+        3,   // 頂点の番号
+        0.0f,// U座標
+        0.0f // V座標
+    );*/
 
     // step-2 テクスチャをロード
     Texture tex;
