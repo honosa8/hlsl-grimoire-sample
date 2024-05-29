@@ -55,12 +55,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         renderContext.SetRootSignature(rootSignature);
 
         // step-3 ワールド行列を作成
-        Matrix mWorld;
-        mWorld.MakeTranslation(0.5f*sin(f/100.0f), 0.4f, 0.0f);
+        Matrix mWorld1;
+        mWorld1.MakeTranslation(0.5f*sin(f/100.0f), 0.0f, 0.0f);
         Matrix mWorld2;
         mWorld2.MakeRotationZ(sin(f / 100.0f));
-        mWorld *= mWorld2;
+        Matrix mWorld = mWorld2 * mWorld1;
         
+
         // step-4 ワールド行列をグラフィックメモリにコピー
         cb.CopyToVRAM(mWorld);
 
