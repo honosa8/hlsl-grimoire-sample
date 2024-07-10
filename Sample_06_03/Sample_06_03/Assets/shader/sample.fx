@@ -59,8 +59,6 @@ Texture2D<float4> g_normalMap : register(t1);
 // スペキュラマップにアクセスするための変数
 Texture2D<float4> g_specularMap : register(t2);
 
-// step-1 AOマップにアクセスするための変数を追加
-
 // サンプラーステート
 sampler g_sampler : register(s0);
 
@@ -106,9 +104,11 @@ float4 PSMain(SPSIn psIn) : SV_Target0
     float3 ambient = ambientLight;
 
     // step-2 AOマップから環境光の強さをサンプリング
-
+	float specPower = g_specularMap.Sample(g_sampler, psIn.uv).r;
+    
     // step-3 環境光の強さを環境光に乗算する
-
+	specLig *= specPower * 10.0f;
+    
     // 拡散反射 + 鏡面反射 + 環境光を合算して最終的な反射光を計算する
     float3 lig = diffuseLig + specLig + ambient;
 
