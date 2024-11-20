@@ -8,9 +8,9 @@ const int NUM_DIRECTIONAL_LIGHT = 4; // ディレクションライトの数
 /// </summary>
 struct DirectionalLight
 {
-    Vector3 direction;  // ライトの方向
-    float pad0;         // パディング
-    Vector4 color;      // ライトのカラー
+	Vector3 direction;  // ライトの方向
+	float pad0;         // パディング
+	Vector4 color;      // ライトのカラー
 };
 
 /// <summary>
@@ -18,10 +18,10 @@ struct DirectionalLight
 /// </summary>
 struct Light
 {
-    DirectionalLight directionalLight[NUM_DIRECTIONAL_LIGHT]; // ディレクションライト
-    Vector3 eyePos;                 // カメラの位置
-    float specPow;                  // スペキュラの絞り
-    Vector3 ambinetLight;           // 環境光
+	DirectionalLight directionalLight[NUM_DIRECTIONAL_LIGHT]; // ディレクションライト
+	Vector3 eyePos;                 // カメラの位置
+	float specPow;                  // スペキュラの絞り
+	Vector3 ambinetLight;           // 環境光
 };
 
 const int NUM_WEIGHTS = 8;
@@ -30,7 +30,7 @@ const int NUM_WEIGHTS = 8;
 /// </summary>
 struct SBlurParam
 {
-    float weights[NUM_WEIGHTS];
+	float weights[NUM_WEIGHTS];
 };
 
 // 関数宣言
@@ -41,98 +41,130 @@ void InitModel(Model& plModel);
 ///////////////////////////////////////////////////////////////////
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    // ゲームの初期化
-    InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
+	// ゲームの初期化
+	InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
 
-    //////////////////////////////////////
-    //  ここから初期化を行うコードを記述する
-    //////////////////////////////////////
+	//////////////////////////////////////
+	//  ここから初期化を行うコードを記述する
+	//////////////////////////////////////
 
-    RootSignature rs;
-    InitRootSignature(rs);
+	RootSignature rs;
+	InitRootSignature(rs);
 
-    // step-1 メインレンダリングターゲットを作成する
+	// step-1 メインレンダリングターゲットを作成する
+	RenderTarget mainRenderTarget;
+	mainRenderTarget.Create(
+		1280,
+		720,
+		1,
+		1,
+		// 【注目】カラーバッファーのフォーマットを32bit浮動小数点にしている
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		DXGI_FORMAT_D32_FLOAT
+	);
 
-    // step-2 強い光のライトを用意する
+	// step-2 強い光のライトを用意する
+	Light light;
 
-    // モデルの初期化情報を設定する
-    ModelInitData plModelInitData;
+	// 【注目】光を強めに設定する
+	light.directionalLight[0].color = { 5.8f,5.8f,5.8f,0.0f };
 
-    // tkmファイルを指定する
-    plModelInitData.m_tkmFilePath = "Assets/modelData/sample.tkm";
+	light.directionalLight[0].direction = { 0.0f,0.0f,-1.0f };
+	light.directionalLight[0].direction.Normalize();
 
-    // シェーダーファイルを指定する
-    plModelInitData.m_fxFilePath = "Assets/shader/sample3D.fx";
+	light.ambinetLight = { 0.5f,0.5f,0.5f };
+	light.eyePos = g_camera3D->GetPosition();
 
-    // ユーザー拡張の定数バッファーに送るデータを指定する
-    plModelInitData.m_expandConstantBuffer = &light;
+	// モデルの初期化情報を設定する
+	ModelInitData plModelInitData;
 
-    // ユーザー拡張の定数バッファーに送るデータのサイズを指定する
-    plModelInitData.m_expandConstantBufferSize = sizeof(light);
+	// tkmファイルを指定する
+	plModelInitData.m_tkmFilePath = "Assets/modelData/sample.tkm";
 
-    // レンダリングするカラーバッファーのフォーマットを指定する
-    plModelInitData.m_colorBufferFormat[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	// シェーダーファイルを指定する
+	plModelInitData.m_fxFilePath = "Assets/shader/sample3D.fx";
 
-    // 設定した初期化情報をもとにモデルを初期化する
-    Model plModel;
-    plModel.Init(plModelInitData);
+	// ユーザー拡張の定数バッファーに送るデータを指定する
+	plModelInitData.m_expandConstantBuffer = &light;
 
-    // step-3 輝度抽出用のレンダリングターゲットを作成
+	// ユーザー拡張の定数バッファーに送るデータのサイズを指定する
+	plModelInitData.m_expandConstantBufferSize = sizeof(light);
 
-    // step-4 輝度抽出用のスプライトを初期化
+	// レンダリングするカラーバッファーのフォーマットを指定する
+	plModelInitData.m_colorBufferFormat[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-    // step-5 ガウシアンブラーを初期化
+	// 設定した初期化情報をもとにモデルを初期化する
+	Model plModel;
+	plModel.Init(plModelInitData);
 
-    // step-6 ボケ画像を加算合成するスプライトを初期化
+	// step-3 輝度抽出用のレンダリングターゲットを作成
+	RenderTarget luminnceRenderTarget;
+	
+	// 解像度、ミップマップレベル
+	luminnceRenderTarget.Create(
+		1280,
+		720,
+		1,
+		1,
+		// 【注目】カラーバッファーのフォーマットを32bit浮動小数点にしている
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		DXGI_FORMAT_D32_FLOAT
+	);
 
-    // step-7 テクスチャを貼り付けるためのスプライトを初期化する
+	// step-4 輝度抽出用のスプライトを初期化
 
-    //////////////////////////////////////
-    // 初期化を行うコードを書くのはここまで！！！
-    //////////////////////////////////////
-    auto& renderContext = g_graphicsEngine->GetRenderContext();
+	// step-5 ガウシアンブラーを初期化
 
-    // ここからゲームループ
-    while (DispatchWindowMessage())
-    {
-        // 1フレームの開始
-        g_engine->BeginFrame();
+	// step-6 ボケ画像を加算合成するスプライトを初期化
 
-        //////////////////////////////////////
-        // ここから絵を描くコードを記述する
-        //////////////////////////////////////
+	// step-7 テクスチャを貼り付けるためのスプライトを初期化する
 
-        // step-8 レンダリングターゲットをmainRenderTargetに変更する
+	//////////////////////////////////////
+	// 初期化を行うコードを書くのはここまで！！！
+	//////////////////////////////////////
+	auto& renderContext = g_graphicsEngine->GetRenderContext();
 
-        // step-9 mainRenderTargetに各種モデルを描画する
+	// ここからゲームループ
+	while (DispatchWindowMessage())
+	{
+		// 1フレームの開始
+		g_engine->BeginFrame();
 
-        // step-10 輝度抽出
+		//////////////////////////////////////
+		// ここから絵を描くコードを記述する
+		//////////////////////////////////////
 
-        // step-11 ガウシアンブラーを実行する
+		// step-8 レンダリングターゲットをmainRenderTargetに変更する
 
-        // step-12 ボケ画像をメインレンダリングターゲットに加算合成
+		// step-9 mainRenderTargetに各種モデルを描画する
 
-        // step-13 メインレンダリングターゲットの絵をフレームバッファーにコピー
+		// step-10 輝度抽出
 
-        // ライトの強さを変更する
-        light.directionalLight[0].color.x += g_pad[0]->GetLStickXF() * 0.5f;
-        light.directionalLight[0].color.y += g_pad[0]->GetLStickXF() * 0.5f;
-        light.directionalLight[0].color.z += g_pad[0]->GetLStickXF() * 0.5f;
+		// step-11 ガウシアンブラーを実行する
 
-        //////////////////////////////////////
-        //絵を描くコードを書くのはここまで！！！
-        //////////////////////////////////////
-        // 1フレーム終了
-        g_engine->EndFrame();
-    }
-    return 0;
+		// step-12 ボケ画像をメインレンダリングターゲットに加算合成
+
+		// step-13 メインレンダリングターゲットの絵をフレームバッファーにコピー
+
+		// ライトの強さを変更する
+		light.directionalLight[0].color.x += g_pad[0]->GetLStickXF() * 0.5f;
+		light.directionalLight[0].color.y += g_pad[0]->GetLStickXF() * 0.5f;
+		light.directionalLight[0].color.z += g_pad[0]->GetLStickXF() * 0.5f;
+
+		//////////////////////////////////////
+		//絵を描くコードを書くのはここまで！！！
+		//////////////////////////////////////
+		// 1フレーム終了
+		g_engine->EndFrame();
+	}
+	return 0;
 }
 
 // ルートシグネチャの初期化
-void InitRootSignature( RootSignature& rs )
+void InitRootSignature(RootSignature& rs)
 {
-    rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+	rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 }
